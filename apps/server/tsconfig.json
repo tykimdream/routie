@@ -1,0 +1,7 @@
+{
+  "extends": "@routie/config/tsconfig.nestjs.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": "./"
+  }
+}
