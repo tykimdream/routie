@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -10,6 +10,7 @@ import {
   ClockIcon,
   ArrowRightIcon,
 } from '@/components/icons';
+import { api, ApiError } from '@/lib/api';
 
 type TransportMode = 'PUBLIC_TRANSIT' | 'WALKING' | 'DRIVING' | 'TAXI';
 
@@ -31,7 +32,10 @@ const transportOptions: {
 ];
 
 export default function NewTripPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const [form, setForm] = useState({
     title: '',
     city: '',
@@ -62,12 +66,30 @@ export default function NewTripPage() {
     }
   };
 
-  const handleSubmit = () => {
-    // 제목 자동 생성
-    const title = form.title.trim() || `${form.city} 여행`;
-    const tripData = { ...form, title };
-    // TODO: API 연동
-    console.log('Trip created:', tripData);
+  const handleSubmit = async () => {
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const title = form.title.trim() || `${form.city} 여행`;
+      const trip = await api.trips.create({
+        title,
+        city: form.city,
+        country: form.country || undefined,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        dailyStart: form.dailyStart,
+        dailyEnd: form.dailyEnd,
+        transport: form.transport,
+      });
+      router.push(`/trips/${trip.id}`);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('여행 생성 중 오류가 발생했습니다');
+      }
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -88,6 +110,12 @@ export default function NewTripPage() {
           />
         </div>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-[12px] text-sm text-red-600">
+          {error}
+        </div>
+      )}
 
       {/* Step 1: 도시 */}
       {step === 1 && (
@@ -319,17 +347,40 @@ export default function NewTripPage() {
             <ArrowRightIcon size={18} />
           </Button>
         ) : (
-          <Link href="/trips" className="w-full">
-            <Button
-              size="lg"
-              fullWidth
-              onClick={handleSubmit}
-              className="gap-2"
-            >
-              여행 만들기
-              <PlaneIcon size={18} />
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            fullWidth
+            disabled={isSubmitting}
+            onClick={handleSubmit}
+            className="gap-2"
+          >
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+                생성 중...
+              </span>
+            ) : (
+              <>
+                여행 만들기
+                <PlaneIcon size={18} />
+              </>
+            )}
+          </Button>
         )}
       </div>
     </div>

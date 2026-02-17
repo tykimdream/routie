@@ -1,3 +1,5 @@
+import type { Trip, Place, TripPlace, Route } from './types';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 
 class ApiError extends Error {
@@ -67,6 +69,75 @@ export const api = {
       }),
     me: () => request<AuthResponse['user']>('/auth/me'),
     refresh: () => request<AuthResponse>('/auth/refresh', { method: 'POST' }),
+  },
+
+  trips: {
+    list: () => request<Trip[]>('/trips'),
+    get: (id: string) => request<Trip>(`/trips/${id}`),
+    create: (data: {
+      title: string;
+      city: string;
+      country?: string;
+      startDate: string;
+      endDate: string;
+      dailyStart?: string;
+      dailyEnd?: string;
+      transport?: string;
+    }) =>
+      request<Trip>('/trips', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: Record<string, unknown>) =>
+      request<Trip>(`/trips/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) => request<Trip>(`/trips/${id}`, { method: 'DELETE' }),
+  },
+
+  places: {
+    search: (query: string) =>
+      request<Place[]>(`/places/search?query=${encodeURIComponent(query)}`),
+    get: (id: string) => request<Place>(`/places/${id}`),
+  },
+
+  tripPlaces: {
+    add: (
+      tripId: string,
+      data: { placeId?: string; priority?: string; googlePlaceId?: string },
+    ) =>
+      request<TripPlace>(`/trips/${tripId}/places`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (tripId: string, id: string, data: Record<string, unknown>) =>
+      request<TripPlace>(`/trips/${tripId}/places/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    reorder: (tripId: string, data: { orderedIds: string[] }) =>
+      request<void>(`/trips/${tripId}/places/reorder`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    remove: (tripId: string, id: string) =>
+      request<void>(`/trips/${tripId}/places/${id}`, { method: 'DELETE' }),
+  },
+
+  routes: {
+    optimize: (tripId: string) =>
+      request<Route[]>(`/trips/${tripId}/routes/optimize`, {
+        method: 'POST',
+      }),
+    list: (tripId: string) => request<Route[]>(`/trips/${tripId}/routes`),
+    get: (tripId: string, routeId: string) =>
+      request<Route>(`/trips/${tripId}/routes/${routeId}`),
+    select: (tripId: string, routeId: string) =>
+      request<Route>(`/trips/${tripId}/routes/${routeId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isSelected: true }),
+      }),
   },
 };
 

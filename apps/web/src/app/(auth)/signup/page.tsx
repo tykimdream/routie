@@ -8,7 +8,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { signupSchema, type SignupFormData } from '@/lib/validations/auth';
-import { api, ApiError } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import { useAuth } from '@/contexts/auth-context';
 
 function PasswordStrength({ password }: { password: string }) {
   const checks = [
@@ -87,6 +88,7 @@ function PasswordStrength({ password }: { password: string }) {
 
 export default function SignupPage() {
   const router = useRouter();
+  const { signup } = useAuth();
   const [serverError, setServerError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -107,13 +109,11 @@ export default function SignupPage() {
     setServerError('');
     setIsLoading(true);
     try {
-      const res = await api.auth.signup({
+      await signup({
         email: data.email,
         password: data.password,
         name: data.name,
       });
-      localStorage.setItem('accessToken', res.accessToken);
-      localStorage.setItem('refreshToken', res.refreshToken);
       router.push('/trips');
     } catch (err) {
       if (err instanceof ApiError) {

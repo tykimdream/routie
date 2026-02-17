@@ -8,10 +8,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
-import { api, ApiError } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [serverError, setServerError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -28,9 +30,7 @@ export default function LoginPage() {
     setServerError('');
     setIsLoading(true);
     try {
-      const res = await api.auth.login(data);
-      localStorage.setItem('accessToken', res.accessToken);
-      localStorage.setItem('refreshToken', res.refreshToken);
+      await login(data);
       router.push('/trips');
     } catch (err) {
       if (err instanceof ApiError) {

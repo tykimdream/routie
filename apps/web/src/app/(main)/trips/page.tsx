@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,64 +10,8 @@ import {
   MapPinIcon,
   ChevronRightIcon,
 } from '@/components/icons';
-
-type TripStatus = 'PLANNING' | 'OPTIMIZED' | 'CONFIRMED' | 'COMPLETED';
-
-interface Trip {
-  id: string;
-  title: string;
-  city: string;
-  country: string;
-  startDate: string;
-  endDate: string;
-  placeCount: number;
-  status: TripStatus;
-  progress: number;
-  emoji: string;
-}
-
-// 더미 데이터 (추후 API 연동)
-const upcomingTrips: Trip[] = [
-  {
-    id: '1',
-    title: '방콕 3일 여행',
-    city: 'Bangkok',
-    country: 'Thailand',
-    startDate: '2026-03-15',
-    endDate: '2026-03-17',
-    placeCount: 12,
-    status: 'PLANNING' as const,
-    progress: 60,
-    emoji: '🇹🇭',
-  },
-  {
-    id: '2',
-    title: '도쿄 5일 여행',
-    city: 'Tokyo',
-    country: 'Japan',
-    startDate: '2026-04-20',
-    endDate: '2026-04-24',
-    placeCount: 8,
-    status: 'PLANNING' as const,
-    progress: 25,
-    emoji: '🇯🇵',
-  },
-];
-
-const pastTrips: Trip[] = [
-  {
-    id: '3',
-    title: '오사카 2일',
-    city: 'Osaka',
-    country: 'Japan',
-    startDate: '2026-01-10',
-    endDate: '2026-01-11',
-    placeCount: 6,
-    status: 'COMPLETED' as const,
-    progress: 100,
-    emoji: '🇯🇵',
-  },
-];
+import { api } from '@/lib/api';
+import type { Trip } from '@/lib/types';
 
 function formatDateRange(start: string, end: string) {
   const s = new Date(start);
@@ -105,21 +52,19 @@ function getDaysUntil(dateStr: string) {
   return `D-${diff}`;
 }
 
-interface TripCardProps {
-  trip: Trip;
-  showProgress?: boolean;
-}
-
-function TripCard({ trip, showProgress = true }: TripCardProps) {
+function TripCard({ trip }: { trip: Trip }) {
   const status = getStatusLabel(trip.status);
   const dday = getDaysUntil(trip.startDate);
+  const placeCount = trip._count?.tripPlaces ?? 0;
 
   return (
     <Link href={`/trips/${trip.id}`}>
       <Card hoverable className="group">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{trip.emoji}</span>
+            <span className="text-2xl">
+              {trip.country ? getCountryEmoji(trip.country) : '✈️'}
+            </span>
             <div>
               <h3 className="font-bold text-sand-800 group-hover:text-primary-600 transition-colors">
                 {trip.title}
@@ -145,7 +90,7 @@ function TripCard({ trip, showProgress = true }: TripCardProps) {
         <div className="flex items-center gap-4 text-sm text-sand-500">
           <div className="flex items-center gap-1">
             <MapPinIcon size={14} />
-            <span>장소 {trip.placeCount}개</span>
+            <span>장소 {placeCount}개</span>
           </div>
           <span
             className={`px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}
@@ -153,24 +98,31 @@ function TripCard({ trip, showProgress = true }: TripCardProps) {
             {status.text}
           </span>
         </div>
-
-        {showProgress && trip.progress < 100 && (
-          <div className="mt-4">
-            <div className="flex items-center justify-between text-xs text-sand-400 mb-1.5">
-              <span>진행률</span>
-              <span>{trip.progress}%</span>
-            </div>
-            <div className="w-full h-1.5 bg-sand-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-primary-400 to-primary-500 rounded-full transition-all duration-500"
-                style={{ width: `${trip.progress}%` }}
-              />
-            </div>
-          </div>
-        )}
       </Card>
     </Link>
   );
+}
+
+function getCountryEmoji(country: string): string {
+  const map: Record<string, string> = {
+    Thailand: '🇹🇭',
+    Japan: '🇯🇵',
+    Korea: '🇰🇷',
+    France: '🇫🇷',
+    Italy: '🇮🇹',
+    Spain: '🇪🇸',
+    USA: '🇺🇸',
+    UK: '🇬🇧',
+    Vietnam: '🇻🇳',
+    Singapore: '🇸🇬',
+    Taiwan: '🇹🇼',
+    China: '🇨🇳',
+    Indonesia: '🇮🇩',
+    Philippines: '🇵🇭',
+    Malaysia: '🇲🇾',
+    Australia: '🇦🇺',
+  };
+  return map[country] ?? '✈️';
 }
 
 function EmptyState() {
@@ -197,11 +149,36 @@ function EmptyState() {
 }
 
 export default function TripsPage() {
-  const hasTrips = upcomingTrips.length > 0 || pastTrips.length > 0;
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!hasTrips) {
+  useEffect(() => {
+    api.trips
+      .list()
+      .then(setTrips)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-32 bg-sand-100 rounded-lg" />
+          <div className="h-24 bg-sand-100 rounded-[12px]" />
+          <div className="h-24 bg-sand-100 rounded-[12px]" />
+        </div>
+      </div>
+    );
+  }
+
+  if (trips.length === 0) {
     return <EmptyState />;
   }
+
+  const now = new Date();
+  const upcoming = trips.filter((t) => new Date(t.startDate) >= now);
+  const past = trips.filter((t) => new Date(t.startDate) < now);
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
@@ -210,7 +187,7 @@ export default function TripsPage() {
         <div>
           <h2 className="text-2xl font-bold text-sand-900">내 여행</h2>
           <p className="text-sm text-sand-400 mt-1">
-            총 {upcomingTrips.length + pastTrips.length}개의 여행
+            총 {trips.length}개의 여행
           </p>
         </div>
         <Link href="/trips/new">
@@ -221,13 +198,13 @@ export default function TripsPage() {
       </div>
 
       {/* Upcoming Trips */}
-      {upcomingTrips.length > 0 && (
+      {upcoming.length > 0 && (
         <section className="mb-8">
           <h3 className="text-sm font-semibold text-sand-500 uppercase tracking-wider mb-3">
             다가오는 여행
           </h3>
           <div className="space-y-3">
-            {upcomingTrips.map((trip) => (
+            {upcoming.map((trip) => (
               <TripCard key={trip.id} trip={trip} />
             ))}
           </div>
@@ -235,14 +212,14 @@ export default function TripsPage() {
       )}
 
       {/* Past Trips */}
-      {pastTrips.length > 0 && (
+      {past.length > 0 && (
         <section>
           <h3 className="text-sm font-semibold text-sand-500 uppercase tracking-wider mb-3">
             지난 여행
           </h3>
           <div className="space-y-3">
-            {pastTrips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} showProgress={false} />
+            {past.map((trip) => (
+              <TripCard key={trip.id} trip={trip} />
             ))}
           </div>
         </section>

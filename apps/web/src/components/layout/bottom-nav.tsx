@@ -2,12 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  MapPinIcon,
-  RouteIcon,
-  CompassIcon,
-  PlusIcon,
-} from '@/components/icons';
+import { RouteIcon, CompassIcon, PlusIcon } from '@/components/icons';
 
 const navItems = [
   { href: '/trips', label: '홈', icon: CompassIcon },
