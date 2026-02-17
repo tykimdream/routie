@@ -1,0 +1,11 @@
+{
+  "name": "@routie/config",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "tsconfig.base.json",
+    "tsconfig.nextjs.json",
+    "tsconfig.nestjs.json",
+    "eslint-preset.js"
+  ]
+}
