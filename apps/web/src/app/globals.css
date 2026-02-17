@@ -1,26 +1,126 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ============================================
+   Routie Design System — Warm & Friendly
+   ============================================ */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Primary: Warm Coral (여행의 설렘) */
+  --color-primary-50: #FFF5F1;
+  --color-primary-100: #FFE8DE;
+  --color-primary-200: #FFD0BC;
+  --color-primary-300: #FFB299;
+  --color-primary-400: #FF8F6B;
+  --color-primary-500: #FF6B3D;
+  --color-primary-600: #E8552A;
+  --color-primary-700: #CC4520;
+
+  /* Secondary: Warm Teal (안정감, 신뢰) */
+  --color-secondary-50: #F0FDFA;
+  --color-secondary-100: #CCFBF1;
+  --color-secondary-200: #99F6E4;
+  --color-secondary-300: #5EEAD4;
+  --color-secondary-400: #2DD4BF;
+  --color-secondary-500: #14B8A6;
+  --color-secondary-600: #0D9488;
+  --color-secondary-700: #0F766E;
+
+  /* Accent: Golden Amber (따뜻함, 풍부함) */
+  --color-accent-50: #FFFBEB;
+  --color-accent-100: #FEF3C7;
+  --color-accent-200: #FDE68A;
+  --color-accent-300: #FCD34D;
+  --color-accent-400: #FBBF24;
+  --color-accent-500: #F59E0B;
+  --color-accent-600: #D97706;
+  --color-accent-700: #B45309;
+
+  /* Priority colors */
+  --color-must: #FF6B6B;
+  --color-want: #FBBF24;
+  --color-optional: #34D399;
+
+  /* Semantic */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+
+  /* Neutrals: Warm Gray */
+  --color-sand-50: #FDFCFA;
+  --color-sand-100: #F9F7F4;
+  --color-sand-200: #F0EDE8;
+  --color-sand-300: #E2DDD5;
+  --color-sand-400: #B8B0A4;
+  --color-sand-500: #8C8478;
+  --color-sand-600: #6B6358;
+  --color-sand-700: #4A4540;
+  --color-sand-800: #2D2B28;
+  --color-sand-900: #1A1918;
+
+  /* Fonts */
+  --font-sans: var(--font-pretendard), var(--font-inter), 'Pretendard', 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Shadows (warm tinted) */
+  --shadow-sm: 0 1px 2px rgba(42, 35, 28, 0.06);
+  --shadow-md: 0 4px 12px rgba(42, 35, 28, 0.08);
+  --shadow-lg: 0 12px 24px rgba(42, 35, 28, 0.12);
+  --shadow-sheet: 0 -4px 24px rgba(42, 35, 28, 0.12);
+}
+
+:root {
+  --background: #FDFCFA;
+  --foreground: #2D2B28;
+  --card-bg: #FFFFFF;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1A1918;
+    --foreground: #F0EDE8;
+    --card-bg: #2D2B28;
   }
 }
 
+/* Base styles */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background-color: var(--color-primary-200);
+  color: var(--color-primary-700);
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--color-primary-400);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
