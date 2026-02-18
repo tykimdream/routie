@@ -1,19 +1,52 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useTrip } from '@/hooks/use-trip';
 import { api } from '@/lib/api';
-import type { Priority, RouteType } from '@/lib/types';
+import type { Priority, RouteType, TripPlace } from '@/lib/types';
 import { PlaceSearch } from '@/components/place/place-search';
-import { PlaceCard } from '@/components/place/place-card';
+import { PlaceRecommendations } from '@/components/place/place-recommendations';
+import { SortablePlaceList } from '@/components/place/sortable-place-list';
+import { PlaceDetailSheet } from '@/components/place/place-detail-sheet';
 import { RouteTabs } from '@/components/route/route-tabs';
 import { RouteTimeline } from '@/components/route/route-timeline';
 import { RouteLoading } from '@/components/route/route-loading';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MapPinIcon, RouteIcon, SparklesIcon } from '@/components/icons';
+import {
+  MapPinIcon,
+  RouteIcon,
+  SparklesIcon,
+  MapIcon,
+  ListIcon,
+} from '@/components/icons';
+
+const PlacesMap = dynamic(
+  () =>
+    import('@/components/map/places-map').then((mod) => ({
+      default: mod.PlacesMap,
+    })),
+  { ssr: false, loading: () => <MapSkeleton height="h-[400px]" /> },
+);
+
+const RouteMap = dynamic(
+  () =>
+    import('@/components/map/route-map').then((mod) => ({
+      default: mod.RouteMap,
+    })),
+  { ssr: false, loading: () => <MapSkeleton height="h-[300px]" /> },
+);
+
+function MapSkeleton({ height }: { height: string }) {
+  return (
+    <div
+      className={`${height} w-full bg-sand-100 rounded-[12px] animate-pulse`}
+    />
+  );
+}
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   PLANNING: { label: '계획 중', color: 'bg-accent-100 text-accent-700' },
@@ -33,6 +66,7 @@ const transportLabels: Record<string, string> = {
 };
 
 type Tab = 'places' | 'routes';
+type ViewMode = 'list' | 'map';
 
 export default function TripDetailPage({
   params,
@@ -43,11 +77,30 @@ export default function TripDetailPage({
   const { trip, loading, refetch } = useTrip(id);
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('places');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [optimizing, setOptimizing] = useState(false);
   const [selectedRouteType, setSelectedRouteType] =
     useState<RouteType>('EFFICIENT');
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTripPlace, setSelectedTripPlace] = useState<TripPlace | null>(
+    null,
+  );
+
+  // Sync selectedTripPlace with trip data after refetch
+  const selectedTripPlaceId = selectedTripPlace?.id;
+  useEffect(() => {
+    if (selectedTripPlaceId && trip?.tripPlaces) {
+      const updated = trip.tripPlaces.find(
+        (tp) => tp.id === selectedTripPlaceId,
+      );
+      if (updated) {
+        setSelectedTripPlace(updated);
+      } else {
+        setSelectedTripPlace(null);
+      }
+    }
+  }, [trip, selectedTripPlaceId]);
 
   const handleAddPlace = async (googlePlaceId: string) => {
     try {
@@ -77,6 +130,32 @@ export default function TripDetailPage({
       refetch();
     } catch {
       setError('장소 삭제에 실패했습니다.');
+    }
+  };
+
+  const handleReorder = async (priority: Priority, orderedIds: string[]) => {
+    try {
+      await api.tripPlaces.reorder(id, { orderedIds });
+      refetch();
+    } catch {
+      setError('순서 변경에 실패했습니다.');
+    }
+  };
+
+  const handleClickCard = (tripPlace: TripPlace) => {
+    setSelectedTripPlace(tripPlace);
+  };
+
+  const handleCloseSheet = () => {
+    setSelectedTripPlace(null);
+  };
+
+  const handleUpdateNote = async (tripPlaceId: string, note: string) => {
+    try {
+      await api.tripPlaces.update(id, tripPlaceId, { userNote: note });
+      refetch();
+    } catch {
+      setError('메모 저장에 실패했습니다.');
     }
   };
 
@@ -142,11 +221,7 @@ export default function TripDetailPage({
     color: 'bg-accent-100 text-accent-700',
   };
   const placeCount = trip.tripPlaces?.length ?? 0;
-  const groupedPlaces = {
-    MUST: trip.tripPlaces?.filter((tp) => tp.priority === 'MUST') ?? [],
-    WANT: trip.tripPlaces?.filter((tp) => tp.priority === 'WANT') ?? [],
-    OPTIONAL: trip.tripPlaces?.filter((tp) => tp.priority === 'OPTIONAL') ?? [],
-  };
+  const allPlaces = trip.tripPlaces ?? [];
 
   const routes = trip.routes ?? [];
   const selectedRoute =
@@ -261,6 +336,12 @@ export default function TripDetailPage({
         <div className="space-y-6">
           <PlaceSearch onAdd={handleAddPlace} />
 
+          <PlaceRecommendations
+            latitude={trip.latitude}
+            longitude={trip.longitude}
+            onAdd={handleAddPlace}
+          />
+
           {placeCount === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-sand-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -273,33 +354,51 @@ export default function TripDetailPage({
             </div>
           ) : (
             <>
-              {(['MUST', 'WANT', 'OPTIONAL'] as const).map((priority) => {
-                const places = groupedPlaces[priority];
-                if (places.length === 0) return null;
-                const labels = {
-                  MUST: { emoji: '🔴', label: '필수 방문' },
-                  WANT: { emoji: '🟡', label: '가고 싶어' },
-                  OPTIONAL: { emoji: '🟢', label: '시간 되면' },
-                };
-                const { emoji, label } = labels[priority];
-                return (
-                  <div key={priority}>
-                    <h4 className="text-sm font-semibold text-sand-500 mb-3">
-                      {emoji} {label} ({places.length})
-                    </h4>
-                    <div className="space-y-2">
-                      {places.map((tp) => (
-                        <PlaceCard
-                          key={tp.id}
-                          tripPlace={tp}
-                          onChangePriority={handleChangePriority}
-                          onRemove={handleRemovePlace}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+              {/* List/Map toggle */}
+              <div className="flex items-center justify-end">
+                <div className="flex items-center bg-sand-100 rounded-full p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('list')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer ${
+                      viewMode === 'list'
+                        ? 'bg-white text-sand-700 shadow-sm'
+                        : 'text-sand-400 hover:text-sand-600'
+                    }`}
+                  >
+                    <ListIcon size={14} />
+                    목록
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('map')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer ${
+                      viewMode === 'map'
+                        ? 'bg-white text-sand-700 shadow-sm'
+                        : 'text-sand-400 hover:text-sand-600'
+                    }`}
+                  >
+                    <MapIcon size={14} />
+                    지도
+                  </button>
+                </div>
+              </div>
+
+              {viewMode === 'list' ? (
+                <SortablePlaceList
+                  tripPlaces={allPlaces}
+                  onChangePriority={handleChangePriority}
+                  onRemove={handleRemovePlace}
+                  onReorder={handleReorder}
+                  onClickCard={handleClickCard}
+                />
+              ) : (
+                <PlacesMap
+                  tripPlaces={allPlaces}
+                  onClickMarker={handleClickCard}
+                  onAddPlace={handleAddPlace}
+                />
+              )}
 
               {placeCount >= 2 && (
                 <Button
@@ -376,6 +475,9 @@ export default function TripDetailPage({
 
               {selectedRoute && (
                 <>
+                  {/* Route Map */}
+                  <RouteMap route={selectedRoute} />
+
                   {/* Reasoning card */}
                   {selectedRoute.reasoning && (
                     <div className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-[12px] p-4 border border-primary-100">
@@ -470,6 +572,14 @@ export default function TripDetailPage({
           )}
         </div>
       )}
+
+      {/* Place Detail Bottom Sheet */}
+      <PlaceDetailSheet
+        tripPlace={selectedTripPlace}
+        onClose={handleCloseSheet}
+        onChangePriority={handleChangePriority}
+        onUpdateNote={handleUpdateNote}
+      />
     </div>
   );
 }

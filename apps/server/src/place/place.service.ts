@@ -37,9 +37,8 @@ export class PlaceService {
       throw new NotFoundException('Google Places에서 장소를 찾을 수 없습니다');
     }
 
-    const photoUrls = details.photoRefs.map((ref) =>
-      this.googleMaps.getPhotoUrl(ref),
-    );
+    // photo ref만 저장 (프론트에서 프록시 URL 생성)
+    const photoUrls = details.photoRefs;
 
     return this.prisma.place.create({
       data: {

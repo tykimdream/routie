@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, type AuthResponse } from '@/lib/api';
+import { api, ApiError, type AuthResponse } from '@/lib/api';
 
 interface User {
   id: string;
@@ -54,9 +54,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.auth
       .me()
       .then((u) => setUser(u))
-      .catch(() => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+      .catch((err) => {
+        // 401/403만 토큰 삭제 (네트워크 에러·서버 재시작 시에는 유지)
+        if (
+          err instanceof ApiError &&
+          (err.statusCode === 401 || err.statusCode === 403)
+        ) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+        }
       })
       .finally(() => setIsLoading(false));
   }, []);

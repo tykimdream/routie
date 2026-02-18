@@ -1,4 +1,4 @@
-import type { Trip, Place, TripPlace, Route } from './types';
+import type { Trip, Place, TripPlace, Route, PlaceDetail } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 
@@ -88,6 +88,8 @@ export const api = {
       dailyStart?: string;
       dailyEnd?: string;
       transport?: string;
+      latitude?: number;
+      longitude?: number;
     }) =>
       request<Trip>('/trips', {
         method: 'POST',
@@ -104,7 +106,21 @@ export const api = {
   places: {
     search: (query: string) =>
       request<Place[]>(`/places/search?query=${encodeURIComponent(query)}`),
-    get: (id: string) => request<Place>(`/places/${id}`),
+    get: (id: string) =>
+      request<Place & { placeDetail?: PlaceDetail | null }>(`/places/${id}`),
+    autocompleteCities: (input: string) =>
+      request<{ placeId: string; mainText: string; secondaryText: string }[]>(
+        `/places/autocomplete/cities?input=${encodeURIComponent(input)}`,
+      ),
+    nearby: (lat: number, lng: number, types?: string, radius?: number) => {
+      const params = new URLSearchParams({
+        lat: String(lat),
+        lng: String(lng),
+      });
+      if (types) params.set('types', types);
+      if (radius) params.set('radius', String(radius));
+      return request<Place[]>(`/places/nearby?${params.toString()}`);
+    },
   },
 
   tripPlaces: {
@@ -145,5 +161,17 @@ export const api = {
       }),
   },
 };
+
+/**
+ * photoUrls 배열의 첫 번째 값으로 프록시 사진 URL 생성.
+ * 기존 데이터(전체 URL)와 새 데이터(ref만) 모두 호환.
+ */
+export function getPhotoProxyUrl(photoRef: string): string {
+  // 이미 전체 프록시 URL인 경우 그대로 반환
+  if (photoRef.startsWith('http')) {
+    return photoRef;
+  }
+  return `${API_BASE}/places/photo?ref=${encodeURIComponent(photoRef)}&maxwidth=400`;
+}
 
 export { ApiError };
