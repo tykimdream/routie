@@ -6,6 +6,7 @@ import {
   Body,
   Param,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -60,6 +61,40 @@ export class TripPlaceController {
     });
   }
 
+  // IMPORTANT: 'reorder' must be declared BEFORE ':id' to prevent route conflict
+  @Patch('reorder')
+  async reorder(
+    @Param('tripId') tripId: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: ReorderTripPlacesDto,
+  ) {
+    await this.tripService.findOne(tripId, userId);
+
+    // Verify all IDs belong to this trip
+    const tripPlaces = await this.prisma.tripPlace.findMany({
+      where: { tripId },
+      select: { id: true },
+    });
+    const validIds = new Set(tripPlaces.map((tp) => tp.id));
+    const invalidIds = dto.orderedIds.filter((id) => !validIds.has(id));
+    if (invalidIds.length > 0) {
+      throw new NotFoundException(
+        `TripPlace not found in this trip: ${invalidIds.join(', ')}`,
+      );
+    }
+
+    await Promise.all(
+      dto.orderedIds.map((id, index) =>
+        this.prisma.tripPlace.update({
+          where: { id },
+          data: { sortOrder: index },
+        }),
+      ),
+    );
+
+    return { success: true };
+  }
+
   @Patch(':id')
   async updatePlace(
     @Param('tripId') tripId: string,
@@ -69,8 +104,9 @@ export class TripPlaceController {
   ) {
     await this.tripService.findOne(tripId, userId);
 
+    // Verify TripPlace belongs to this trip (prevents IDOR)
     return this.prisma.tripPlace.update({
-      where: { id },
+      where: { id, tripId },
       data: {
         ...(dto.priority !== undefined && { priority: dto.priority as any }),
         ...(dto.userNote !== undefined && { userNote: dto.userNote }),
@@ -85,26 +121,6 @@ export class TripPlaceController {
     });
   }
 
-  @Patch('reorder')
-  async reorder(
-    @Param('tripId') tripId: string,
-    @CurrentUser('id') userId: string,
-    @Body() dto: ReorderTripPlacesDto,
-  ) {
-    await this.tripService.findOne(tripId, userId);
-
-    await Promise.all(
-      dto.orderedIds.map((id, index) =>
-        this.prisma.tripPlace.update({
-          where: { id },
-          data: { sortOrder: index },
-        }),
-      ),
-    );
-
-    return { success: true };
-  }
-
   @Delete(':id')
   async removePlace(
     @Param('tripId') tripId: string,
@@ -112,6 +128,7 @@ export class TripPlaceController {
     @CurrentUser('id') userId: string,
   ) {
     await this.tripService.findOne(tripId, userId);
-    return this.prisma.tripPlace.delete({ where: { id } });
+    // Verify TripPlace belongs to this trip (prevents IDOR)
+    return this.prisma.tripPlace.delete({ where: { id, tripId } });
   }
 }

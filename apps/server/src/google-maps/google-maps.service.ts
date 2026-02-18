@@ -87,7 +87,23 @@ export class GoogleMapsService {
   }
 
   getPhotoUrl(photoRef: string, maxWidth = 400): string {
-    return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${photoRef}&key=${this.apiKey}`;
+    // Return a server-side proxy URL instead of embedding the API key
+    const apiBase = process.env.API_BASE_URL ?? 'http://localhost:4000/api';
+    return `${apiBase}/places/photo?ref=${encodeURIComponent(photoRef)}&maxwidth=${maxWidth}`;
+  }
+
+  async fetchPhoto(
+    photoRef: string,
+    maxWidth = 400,
+  ): Promise<{ buffer: Buffer; contentType: string }> {
+    const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${photoRef}&key=${this.apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Photo fetch failed: ${res.status}`);
+    }
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const contentType = res.headers.get('content-type') ?? 'image/jpeg';
+    return { buffer, contentType };
   }
 
   mapTypesToCategory(types: string[]): string {

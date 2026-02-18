@@ -1,9 +1,11 @@
 import {
   IsString,
+  IsNotEmpty,
   IsOptional,
   IsDateString,
   IsEnum,
   Matches,
+  MaxLength,
 } from 'class-validator';
 
 enum Transport {
@@ -15,13 +17,18 @@ enum Transport {
 
 export class CreateTripDto {
   @IsString()
+  @IsNotEmpty({ message: '여행 제목을 입력해주세요' })
+  @MaxLength(200)
   title!: string;
 
   @IsString()
+  @IsNotEmpty({ message: '도시를 입력해주세요' })
+  @MaxLength(100)
   city!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   country?: string;
 
   @IsDateString()
@@ -31,11 +38,15 @@ export class CreateTripDto {
   endDate!: string;
 
   @IsOptional()
-  @Matches(/^\d{2}:\d{2}$/, { message: 'dailyStart must be HH:mm format' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'dailyStart must be valid HH:mm format (00:00-23:59)',
+  })
   dailyStart?: string;
 
   @IsOptional()
-  @Matches(/^\d{2}:\d{2}$/, { message: 'dailyEnd must be HH:mm format' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'dailyEnd must be valid HH:mm format (00:00-23:59)',
+  })
   dailyEnd?: string;
 
   @IsOptional()

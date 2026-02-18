@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTripDto, UpdateTripDto } from './dto';
@@ -11,14 +12,21 @@ export class TripService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateTripDto) {
+    const startDate = new Date(dto.startDate);
+    const endDate = new Date(dto.endDate);
+
+    if (endDate < startDate) {
+      throw new BadRequestException('종료일은 시작일 이후여야 합니다');
+    }
+
     return this.prisma.trip.create({
       data: {
         userId,
         title: dto.title,
         city: dto.city,
         country: dto.country,
-        startDate: new Date(dto.startDate),
-        endDate: new Date(dto.endDate),
+        startDate,
+        endDate,
         dailyStart: dto.dailyStart ?? '10:00',
         dailyEnd: dto.dailyEnd ?? '21:00',
         transport: dto.transport ?? 'PUBLIC_TRANSIT',

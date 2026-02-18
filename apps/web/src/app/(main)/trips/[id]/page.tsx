@@ -47,31 +47,48 @@ export default function TripDetailPage({
   const [selectedRouteType, setSelectedRouteType] =
     useState<RouteType>('EFFICIENT');
   const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAddPlace = async (googlePlaceId: string) => {
-    await api.tripPlaces.add(id, { googlePlaceId });
-    refetch();
+    try {
+      setError(null);
+      await api.tripPlaces.add(id, { googlePlaceId });
+      refetch();
+    } catch {
+      setError('장소 추가에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const handleChangePriority = async (
     tripPlaceId: string,
     priority: Priority,
   ) => {
-    await api.tripPlaces.update(id, tripPlaceId, { priority });
-    refetch();
+    try {
+      await api.tripPlaces.update(id, tripPlaceId, { priority });
+      refetch();
+    } catch {
+      setError('우선순위 변경에 실패했습니다.');
+    }
   };
 
   const handleRemovePlace = async (tripPlaceId: string) => {
-    await api.tripPlaces.remove(id, tripPlaceId);
-    refetch();
+    try {
+      await api.tripPlaces.remove(id, tripPlaceId);
+      refetch();
+    } catch {
+      setError('장소 삭제에 실패했습니다.');
+    }
   };
 
   const handleOptimize = async () => {
     setOptimizing(true);
+    setError(null);
     try {
       await api.routes.optimize(id);
       await refetch();
       setActiveTab('routes');
+    } catch {
+      setError('경로 생성에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setOptimizing(false);
     }
@@ -82,6 +99,8 @@ export default function TripDetailPage({
     try {
       await api.routes.select(id, routeId);
       await refetch();
+    } catch {
+      setError('경로 확정에 실패했습니다.');
     } finally {
       setConfirming(false);
     }
@@ -89,8 +108,12 @@ export default function TripDetailPage({
 
   const handleDelete = async () => {
     if (!confirm('이 여행을 삭제하시겠습니까?')) return;
-    await api.trips.delete(id);
-    router.push('/trips');
+    try {
+      await api.trips.delete(id);
+      router.push('/trips');
+    } catch {
+      setError('여행 삭제에 실패했습니다.');
+    }
   };
 
   if (loading) {
@@ -218,6 +241,20 @@ export default function TripDetailPage({
           </button>
         ))}
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-[10px] flex items-center justify-between">
+          <p className="text-sm text-red-600">{error}</p>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="text-red-400 hover:text-red-600 ml-2 cursor-pointer"
+          >
+            &times;
+          </button>
+        </div>
+      )}
 
       {/* Places Tab */}
       {activeTab === 'places' && (

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GoogleMapsService } from '../google-maps/google-maps.service';
 
@@ -34,7 +34,7 @@ export class PlaceService {
 
     const details = await this.googleMaps.getPlaceDetails(googlePlaceId);
     if (!details) {
-      throw new Error(`Place not found: ${googlePlaceId}`);
+      throw new NotFoundException('Google Places에서 장소를 찾을 수 없습니다');
     }
 
     const photoUrls = details.photoRefs.map((ref) =>

@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation';
 import { RouteIcon, CompassIcon, PlusIcon } from '@/components/icons';
 
 const navItems = [
-  { href: '/trips', label: '홈', icon: CompassIcon },
+  { href: '/trips', label: '홈', icon: CompassIcon, exact: true },
   { href: '/trips/new', label: '새 여행', icon: PlusIcon, isAction: true },
-  { href: '/routes', label: '경로', icon: RouteIcon },
+  { href: '/trips', label: '내 여행', icon: RouteIcon },
 ];
 
 export function BottomNav() {
@@ -17,7 +17,9 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-sand-200 sm:hidden">
       <div className="flex items-center justify-around h-16 px-4">
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = item.exact
+            ? pathname === item.href
+            : pathname.startsWith(item.href);
           const Icon = item.icon;
 
           if (item.isAction) {

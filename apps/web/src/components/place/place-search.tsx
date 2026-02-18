@@ -45,6 +45,13 @@ export function PlaceSearch({ onAdd }: PlaceSearchProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   const handleSearch = (value: string) => {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -117,7 +124,7 @@ export function PlaceSearch({ onAdd }: PlaceSearchProps) {
                 <p className="text-xs text-sand-400 truncate">
                   {place.address}
                 </p>
-                {place.rating && (
+                {place.rating != null && place.rating > 0 && (
                   <div className="flex items-center gap-1 mt-1">
                     <StarIcon size={12} className="text-yellow-400" />
                     <span className="text-xs text-sand-500">

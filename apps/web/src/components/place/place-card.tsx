@@ -91,7 +91,7 @@ export function PlaceCard({
 
       <div className="flex items-center justify-between mt-3">
         <div className="flex items-center gap-2">
-          {place.rating && (
+          {place.rating != null && place.rating > 0 && (
             <div className="flex items-center gap-1">
               <StarIcon size={14} className="text-yellow-400" />
               <span className="text-xs font-medium text-sand-600">

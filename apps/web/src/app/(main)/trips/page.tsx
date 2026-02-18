@@ -151,12 +151,13 @@ function EmptyState() {
 export default function TripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     api.trips
       .list()
       .then(setTrips)
-      .catch(() => {})
+      .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -168,6 +169,29 @@ export default function TripsPage() {
           <div className="h-24 bg-sand-100 rounded-[12px]" />
           <div className="h-24 bg-sand-100 rounded-[12px]" />
         </div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+        <p className="text-sand-500 mb-4">여행 목록을 불러오지 못했습니다.</p>
+        <button
+          type="button"
+          onClick={() => {
+            setFetchError(false);
+            setLoading(true);
+            api.trips
+              .list()
+              .then(setTrips)
+              .catch(() => setFetchError(true))
+              .finally(() => setLoading(false));
+          }}
+          className="text-primary-500 font-medium cursor-pointer"
+        >
+          다시 시도
+        </button>
       </div>
     );
   }

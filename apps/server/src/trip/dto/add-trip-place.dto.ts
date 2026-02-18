@@ -1,4 +1,13 @@
-import { IsString, IsOptional, IsEnum, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  IsArray,
+  Min,
+  MaxLength,
+  ArrayMaxSize,
+} from 'class-validator';
 
 enum Priority {
   MUST = 'MUST',
@@ -8,6 +17,7 @@ enum Priority {
 
 export class AddTripPlaceDto {
   @IsString()
+  @MaxLength(500)
   googlePlaceId!: string;
 
   @IsOptional()
@@ -16,6 +26,7 @@ export class AddTripPlaceDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2000)
   userNote?: string;
 
   @IsOptional()
@@ -25,6 +36,7 @@ export class AddTripPlaceDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(50)
   preferredTime?: string;
 }
 
@@ -35,6 +47,7 @@ export class UpdateTripPlaceDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2000)
   userNote?: string;
 
   @IsOptional()
@@ -44,10 +57,13 @@ export class UpdateTripPlaceDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(50)
   preferredTime?: string;
 }
 
 export class ReorderTripPlacesDto {
+  @IsArray()
   @IsString({ each: true })
+  @ArrayMaxSize(200)
   orderedIds!: string[];
 }

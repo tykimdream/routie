@@ -100,7 +100,9 @@ export class RouteService {
                   arrivalTime,
                   departureTime,
                   duration: s.duration,
-                  travelTimeFromPrev: s.travelTimeFromPrev,
+                  travelTimeFromPrev: s.travelTimeFromPrev
+                    ? Math.round(s.travelTimeFromPrev / 60)
+                    : 0,
                   travelDistFromPrev: s.travelDistFromPrev,
                   travelMode: trip.transport.toLowerCase(),
                   selectionReason: stopReasons[i] ?? null,
@@ -173,9 +175,9 @@ export class RouteService {
       data: { isSelected: false },
     });
 
-    // Select the chosen route
+    // Select the chosen route (verify it belongs to this trip)
     const route = await this.prisma.route.update({
-      where: { id: routeId },
+      where: { id: routeId, tripId },
       data: { isSelected: true },
       include: {
         stops: {
