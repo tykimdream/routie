@@ -4,12 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  PlaneIcon,
-  MapPinIcon,
-  ClockIcon,
-  ArrowRightIcon,
-} from '@/components/icons';
+import { CitySearch } from '@/components/trip/city-search';
+import { PlaneIcon, ClockIcon, ArrowRightIcon } from '@/components/icons';
 import { api, ApiError } from '@/lib/api';
 
 type TransportMode = 'PUBLIC_TRANSIT' | 'WALKING' | 'DRIVING' | 'TAXI';
@@ -45,6 +41,8 @@ export default function NewTripPage() {
     dailyStart: '10:00',
     dailyEnd: '21:00',
     transport: 'PUBLIC_TRANSIT' as TransportMode,
+    latitude: undefined as number | undefined,
+    longitude: undefined as number | undefined,
   });
 
   const totalSteps = 3;
@@ -80,6 +78,8 @@ export default function NewTripPage() {
         dailyStart: form.dailyStart,
         dailyEnd: form.dailyEnd,
         transport: form.transport,
+        latitude: form.latitude,
+        longitude: form.longitude,
       });
       router.push(`/trips/${trip.id}`);
     } catch (err) {
@@ -127,37 +127,32 @@ export default function NewTripPage() {
             <h3 className="text-xl font-bold text-sand-800 mb-2">
               어디로 떠나시나요?
             </h3>
-            <p className="text-sand-400">여행할 도시를 입력해주세요</p>
+            <p className="text-sand-400">여행할 도시를 검색해주세요</p>
           </div>
+
+          <CitySearch
+            initialCity={form.city}
+            onSelect={(city, country, lat, lng) => {
+              setForm((prev) => ({
+                ...prev,
+                city,
+                country,
+                latitude: lat,
+                longitude: lng,
+              }));
+            }}
+          />
 
           <div>
             <label className="block text-sm font-medium text-sand-700 mb-2">
-              도시
-            </label>
-            <div className="relative">
-              <MapPinIcon
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-sand-400"
-              />
-              <input
-                type="text"
-                value={form.city}
-                onChange={(e) => updateForm('city', e.target.value)}
-                placeholder="예: 방콕, 도쿄, 파리..."
-                className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-sand-200 rounded-[12px] text-sand-800 placeholder:text-sand-300 focus:outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100 transition-all"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-sand-700 mb-2">
-              나라 <span className="text-sand-300">(선택)</span>
+              나라{' '}
+              <span className="text-sand-300">(자동 입력 / 수정 가능)</span>
             </label>
             <input
               type="text"
               value={form.country}
               onChange={(e) => updateForm('country', e.target.value)}
-              placeholder="예: 태국, 일본, 프랑스..."
+              placeholder="도시를 선택하면 자동 입력됩니다"
               className="w-full px-4 py-3.5 bg-white border-2 border-sand-200 rounded-[12px] text-sand-800 placeholder:text-sand-300 focus:outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100 transition-all"
             />
           </div>

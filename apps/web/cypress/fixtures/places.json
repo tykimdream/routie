@@ -1,0 +1,17 @@
+{
+  "tokyoPlaces": {
+    "sensoji": {
+      "googlePlaceId": "ChIJ8T1GpMGOGGARDYGSgpooDWw",
+      "name": "센소지"
+    },
+    "tokyoTower": {
+      "googlePlaceId": "ChIJCewJkL2LGGAR3Qmk0vCTGkg",
+      "name": "도쿄타워"
+    },
+    "meijiShrine": {
+      "googlePlaceId": "ChIJ5SZMmreMGGARcz8QSTiJyo8",
+      "name": "메이지신궁"
+    }
+  },
+  "searchQuery": "도쿄타워"
+}

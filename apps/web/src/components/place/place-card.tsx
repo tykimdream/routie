@@ -41,19 +41,36 @@ interface PlaceCardProps {
   tripPlace: TripPlace;
   onChangePriority: (id: string, priority: Priority) => void;
   onRemove: (id: string) => void;
+  onClick?: () => void;
+  dragHandle?: React.ReactNode;
 }
 
 export function PlaceCard({
   tripPlace,
   onChangePriority,
   onRemove,
+  onClick,
+  dragHandle,
 }: PlaceCardProps) {
   const { place, priority } = tripPlace;
   const priorities: Priority[] = ['MUST', 'WANT', 'OPTIONAL'];
 
   return (
-    <div className="bg-white rounded-[12px] border border-sand-200 p-4 shadow-sm">
+    <div
+      className={`bg-white rounded-[12px] border border-sand-200 p-4 shadow-sm${onClick ? ' cursor-pointer hover:border-sand-300 transition-colors' : ''}`}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter') onClick();
+            }
+          : undefined
+      }
+    >
       <div className="flex items-start justify-between mb-2">
+        {dragHandle}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h4 className="font-semibold text-sand-800 truncate">
@@ -70,7 +87,10 @@ export function PlaceCard({
         </div>
         <button
           type="button"
-          onClick={() => onRemove(tripPlace.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(tripPlace.id);
+          }}
           className="text-sand-300 hover:text-red-400 transition-colors p-1 cursor-pointer"
         >
           <svg
@@ -109,7 +129,10 @@ export function PlaceCard({
               <button
                 key={p}
                 type="button"
-                onClick={() => onChangePriority(tripPlace.id, p)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChangePriority(tripPlace.id, p);
+                }}
                 className={`px-2.5 py-1 text-xs font-medium rounded-full border transition-all cursor-pointer ${
                   isActive
                     ? `${c.bg} ${c.color}`

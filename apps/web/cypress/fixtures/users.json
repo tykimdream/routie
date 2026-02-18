@@ -1,0 +1,21 @@
+{
+  "validUser": {
+    "name": "테스트 사용자",
+    "email": "cypress-valid@test.com",
+    "password": "TestPass1"
+  },
+  "loginUser": {
+    "email": "cypress-login@test.com",
+    "password": "TestPass1"
+  },
+  "weakPassword": {
+    "name": "약한 비밀번호",
+    "email": "cypress-weak@test.com",
+    "password": "short"
+  },
+  "invalidEmail": {
+    "name": "잘못된 이메일",
+    "email": "not-an-email",
+    "password": "TestPass1"
+  }
+}

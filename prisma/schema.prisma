@@ -43,6 +43,8 @@ model Trip {
   endDate     DateTime @map("end_date")
   dailyStart  String   @default("10:00") @map("daily_start") // HH:mm
   dailyEnd    String   @default("21:00") @map("daily_end")   // HH:mm
+  latitude    Float?   // 도시 중심 위도
+  longitude   Float?   // 도시 중심 경도
   transport   Transport @default(PUBLIC_TRANSIT)
   status      TripStatus @default(PLANNING)
 

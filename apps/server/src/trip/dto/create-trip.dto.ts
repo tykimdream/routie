@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsDateString,
   IsEnum,
+  IsNumber,
   Matches,
   MaxLength,
 } from 'class-validator';
@@ -52,4 +53,12 @@ export class CreateTripDto {
   @IsOptional()
   @IsEnum(Transport)
   transport?: Transport;
+
+  @IsOptional()
+  @IsNumber()
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
 }

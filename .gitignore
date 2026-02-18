@@ -47,6 +47,9 @@ prisma/*.db
 
 # Testing
 coverage/
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
 
 # PWA
 sw.js

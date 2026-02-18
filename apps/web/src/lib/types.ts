@@ -31,6 +31,8 @@ export interface Trip {
   endDate: string;
   dailyStart: string;
   dailyEnd: string;
+  latitude: number | null;
+  longitude: number | null;
   transport: Transport;
   status: TripStatus;
   createdAt: string;
@@ -38,6 +40,17 @@ export interface Trip {
   _count?: { tripPlaces: number };
   tripPlaces?: TripPlace[];
   routes?: Route[];
+}
+
+export interface PlaceDetail {
+  id: string;
+  placeId: string;
+  highlights: string[];
+  signatureMenus: string[];
+  vibes: string[];
+  reviewHighlights: string[];
+  avgDuration: number | null;
+  nearestStation: string | null;
 }
 
 export interface Place {
@@ -54,6 +67,7 @@ export interface Place {
   photoUrls: string[];
   summary: string | null;
   openingHours: unknown;
+  placeDetail?: PlaceDetail | null;
 }
 
 export interface TripPlace {

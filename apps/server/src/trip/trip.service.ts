@@ -30,6 +30,8 @@ export class TripService {
         dailyStart: dto.dailyStart ?? '10:00',
         dailyEnd: dto.dailyEnd ?? '21:00',
         transport: dto.transport ?? 'PUBLIC_TRANSIT',
+        latitude: dto.latitude,
+        longitude: dto.longitude,
       },
     });
   }
@@ -85,6 +87,8 @@ export class TripService {
     if (dto.dailyStart !== undefined) data.dailyStart = dto.dailyStart;
     if (dto.dailyEnd !== undefined) data.dailyEnd = dto.dailyEnd;
     if (dto.transport !== undefined) data.transport = dto.transport;
+    if (dto.latitude !== undefined) data.latitude = dto.latitude;
+    if (dto.longitude !== undefined) data.longitude = dto.longitude;
 
     return this.prisma.trip.update({
       where: { id },

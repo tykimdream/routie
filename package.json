@@ -45,7 +45,8 @@
       "@nestjs/core",
       "sharp",
       "unrs-resolver",
-      "bcrypt"
+      "bcrypt",
+      "cypress"
     ]
   },
   "dependencies": {
